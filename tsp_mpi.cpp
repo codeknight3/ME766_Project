@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const int MAXN = 12;
+const int MAXN = 13;
 const int INF = 1e9;
 const int MIN_EDGE_WEIGHT = 1;
 const int MAX_EDGE_WEIGHT = 10;
@@ -98,7 +98,7 @@ void print_matrix(int** matrix, int N)
 
 int main(int argc, char *argv[])
 {
-	int N = 11;
+	int N = 13;
 
 	int			npes;					/* Number of PEs */
 	int			mype;					/* My PE number  */
@@ -187,49 +187,24 @@ int main(int argc, char *argv[])
 	// comparing the optimal values from other PEs in the MASTER
 	if(mype == MASTER){
 
-		// creating arrays to store values received from other PEs
-
-		int* tmp_optimal_value = new int[npes];
-		int** tmp_ans = new int*[npes];
-		for(int pe = 0 ; pe < npes ; pe++){
-			tmp_ans[pe] = new int[N+1];
-		}
-		tmp_optimal_value[mype] = optimal_value;
-		tmp_ans[mype] = ans;
-
 		// receiving ans from all other PEs
 		for(int pe = 1 ; pe < npes ; pe++) {
-			MPI_Recv(&tmp_ans[pe][0], (N+1), MPI_INT, pe, pe, MPI_COMM_WORLD, &status);
-			MPI_Recv(&tmp_optimal_value[pe], 1, MPI_INT, pe, pe, MPI_COMM_WORLD, &status);
+
+			int tmp_optimal_value;
+			int* tmp_ans = new int[N+1];
+			MPI_Recv(&tmp_ans[0], (N+1), MPI_INT, pe, pe, MPI_COMM_WORLD, &status);
+			MPI_Recv(&tmp_optimal_value, 1, MPI_INT, pe, pe, MPI_COMM_WORLD, &status);
+
+			if(tmp_optimal_value<optimal_value){
+				optimal_value = tmp_optimal_value;
+				copy(tmp_ans, tmp_ans+N+1, ans);
+			}
 		}
-
-		// finding index of minimum optimal value
-		int minElementIndex = min_element(tmp_optimal_value,tmp_optimal_value+npes) - tmp_optimal_value;
-
-		delete ans;
-
-		// copying optimal ans to ans
-		copy(tmp_ans[minElementIndex], tmp_ans[minElementIndex]+N+1, ans);
-		
-		// sending ans to other PEs
-		for(int pe = 1 ; pe < npes ; pe++) {
-			MPI_Send(&ans[0], (N+1), MPI_INT, pe, pe, MPI_COMM_WORLD);
-		}
-
-		// deleting allocated memory
-		for(int pe = 1 ; pe < npes ; pe++){
-			delete tmp_ans[pe];
-		}
-		delete tmp_optimal_value;
-		delete tmp_ans;
 	}
 	else{
 		// send ans to MASTER
 		MPI_Send(&ans[0], (N+1), MPI_INT, MASTER, mype, MPI_COMM_WORLD);
 		MPI_Send(&optimal_value, 1, MPI_INT, MASTER, mype, MPI_COMM_WORLD);
-
-		// receiving optimal ans from MASTER
-		MPI_Recv(&ans[0], (N+1), MPI_INT, MASTER, mype, MPI_COMM_WORLD, &status);
 	}
 
 	MPI_Barrier( MPI_COMM_WORLD );

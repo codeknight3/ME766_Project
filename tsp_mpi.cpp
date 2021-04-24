@@ -234,6 +234,12 @@ int main(int argc, char *argv[])
 
 	MPI_Barrier( MPI_COMM_WORLD );
 
+	// debugging
+	// if (mype == 0){
+	// 	for(int it = 0 ; it < N+1 ; it++) cout<<ans[it]<<" ";
+	// 	cout<<endl;
+	// }
+
 	end = MPI_Wtime();								// end time
 	
 	// printing the minimum cost path
@@ -258,6 +264,9 @@ int main(int argc, char *argv[])
     if(mype == MASTER){
 		cout<<"Run-Time : "<< (end-start) << endl;
 	}
+
+	// deleting allocated memory
+	delete ans;
 
 	MPI_Finalize();
 

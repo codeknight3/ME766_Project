@@ -1,4 +1,6 @@
 #include<bits/stdc++.h>
+#include <ctime>
+#include <chrono>
 
 using namespace std;
 
@@ -33,16 +35,9 @@ void assign_edge_weights(vector<vector<int>>&matrix)
 		for(int j=i+1;j<n;j++)
 		{
 			matrix[i][j] = random(MIN_EDGE_WEIGHT,MAX_EDGE_WEIGHT);
+			matrix[j][i] = matrix[i][j];
 		}
 		matrix[i][i] = 0;
-	}
-
-	for(int i=0;i<n;i++)
-	{
-		for(int j=0;j<i;j++)
-		{
-			matrix[i][j] = matrix[j][i];
-		}
 	}
 }
 
@@ -134,17 +129,33 @@ void print_matrix(vector<vector<int>>& matrix)
 
 int main()
 {
-	int N = 4;
+	int N = 11;
 
 	precompute_factorial();
 
 	vector<vector<int>>matrix(N,vector<int>(N,0));
 	assign_edge_weights(matrix);
 
+	// printing the path weight matrix
 	print_matrix(matrix);
+	cout<<endl;
+
+	auto start = std::chrono::high_resolution_clock::now();		// start time
 
 	vector<int>ans = tsp_serial(matrix);
+
+	auto finish = std::chrono::high_resolution_clock::now();	// end time
+
+	// printing the minimum cost path
 	for(auto x : ans)cout<<x<<" ";
 	cout<<endl;
+	cout<<endl;
+
+    // printing the minimum path cost
 	cout<<find_path_cost(matrix,ans)<<endl;
+	cout<<endl;
+
+	// printing the run-time
+	chrono::duration<double> elapsed = finish - start;
+	cout << "Run-Time : " << elapsed.count() << endl;
 }

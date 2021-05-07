@@ -98,7 +98,7 @@ void print_matrix(int** matrix, int N)
 
 int main(int argc, char *argv[])
 {
-	int N = 13;
+	int N = stoi(argv[1]);
 
 	int			npes;					/* Number of PEs */
 	int			mype;					/* My PE number  */
@@ -116,14 +116,14 @@ int main(int argc, char *argv[])
 	
 	int** matrix = new int*[N];
 	for (int i = 0; i < N; i++) {
-        matrix[i] = new int[N];
-    }
+		matrix[i] = new int[N];
+	}
 	
 	// assigning edge weights in MASTER
-    if(mype == MASTER){
+	if(mype == MASTER){
 		assign_edge_weights(matrix, N);
-    }
-    // sending the edge weights to other PEs
+	}
+	// sending the edge weights to other PEs
 	if(mype == MASTER){
 		for(int pe = 1 ; pe < npes ; pe++) {
 			for (int i = 0 ; i < N ; i++) {
@@ -140,10 +140,10 @@ int main(int argc, char *argv[])
 	MPI_Barrier( MPI_COMM_WORLD );
 
 	// printing the path weight matrix
-	if(mype == MASTER){
-		print_matrix(matrix, N);
-		cout<<endl;
-	}
+	// if(mype == MASTER){
+	// 	print_matrix(matrix, N);
+	// 	cout<<endl;
+	// }
 
 	MPI_Barrier( MPI_COMM_WORLD );
 
@@ -156,33 +156,57 @@ int main(int argc, char *argv[])
 
 	// divide among PEs
 
-	vector<int> my_ans;
-
 	long long nppe = fact[N-1]/npes;
+	long long rem = fact[N-1]%npes;
+
+	long long start_perm_ind, end_perm_ind;
+
 
 	vector<int>nodes;
-	for(int i=1;i<N;i++)nodes.push_back(i);
-	vector<int>nodes_begin = nth_permutation(nodes, ((mype*nppe) + 1));
-	vector<int>nodes_end = nth_permutation(nodes, (mype + 1)*nppe);
+	for(int i=1;i<N;i++) nodes.push_back(i);
+
+	if(rem == 0){
+		start_perm_ind = (mype*nppe) + 1;
+		end_perm_ind = (mype + 1)*nppe;
+	}
+	else{
+		if(mype < rem){
+			start_perm_ind = (mype*(nppe + 1)) + 1;
+			end_perm_ind = (mype + 1)*(nppe + 1);
+		}
+		else{
+			start_perm_ind = rem*(nppe + 1) + (mype - rem)*nppe + 1;
+			end_perm_ind = rem*(nppe + 1) + (mype + 1 - rem)*nppe;
+		}
+	}
 
 	// int iter = 0;
-	do
-	{
-		vector<int>temp = nodes_begin;
-		temp.push_back(0);
-		temp.insert(temp.begin(),0);
-		int val = find_path_cost(matrix, temp);
-		if(val < optimal_value)
+
+	// compute only when some work is assigned to the current PE
+	if(start_perm_ind <= end_perm_ind){
+		vector<int> my_ans;
+
+		vector<int>nodes_begin = nth_permutation(nodes, start_perm_ind);
+		vector<int>nodes_end = nth_permutation(nodes, end_perm_ind);
+		do
 		{
-			optimal_value = val;
-			my_ans = temp;
-		}
+			vector<int>temp = nodes_begin;
+			temp.push_back(0);
+			temp.insert(temp.begin(),0);
+			int val = find_path_cost(matrix, temp);
+			if(val < optimal_value)
+			{
+				optimal_value = val;
+				my_ans = temp;
+			}
 
-		if(nodes_begin == nodes_end) break;
-		// iter++;
+			// iter++;
+			if(nodes_begin == nodes_end) break;
 
-	}while(next_permutation(nodes_begin.begin(),nodes_begin.end()));
-	copy(my_ans.begin(), my_ans.end(), ans);
+		}while(next_permutation(nodes_begin.begin(),nodes_begin.end()));
+		copy(my_ans.begin(), my_ans.end(), ans);
+
+	}
 
 	// comparing the optimal values from other PEs in the MASTER
 	if(mype == MASTER){
@@ -209,36 +233,40 @@ int main(int argc, char *argv[])
 
 	MPI_Barrier( MPI_COMM_WORLD );
 
-	// debugging
-	// if (mype == 0){
-	// 	for(int it = 0 ; it < N+1 ; it++) cout<<ans[it]<<" ";
-	// 	cout<<endl;
-	// }
-
 	end = MPI_Wtime();								// end time
 	
 	// printing the minimum cost path
-    if(mype == MASTER){
-		for (int i = 0; i < N+1; i++) {
-	        cout << ans[i] << ' ';
-	    }
-	    cout<<endl<<endl;
-	}
+	// if(mype == MASTER){
+	// 	for (int i = 0; i < N+1; i++) {
+	// 		cout << ans[i] << ' ';
+	// 	}
+	// 	cout<<endl<<endl;
+	// }
 
-    // printing the minimum path cost
-    if(mype == MASTER){
-		int cost = 0;
-		for(int i=1;i<N+1;i++)
-		{
-			cost += matrix[ans[i]][ans[i-1]];
-		}
-		cout<<cost<<endl<<endl;
-	}
+	// printing the minimum path cost
+	// if(mype == MASTER){
+	// 	int cost = 0;
+	// 	for(int i=1;i<N+1;i++)
+	// 	{
+	// 		cost += matrix[ans[i]][ans[i-1]];
+	// 	}
+	// 	cout<<cost<<endl<<endl;
+	// }
 
 	// printing the run-time
-    if(mype == MASTER){
-		cout<<"Run-Time : "<< (end-start) << endl;
+	if(mype == MASTER){
+		cout << fixed << setprecision(5) << (end-start) << endl;
 	}
+
+	// debugging
+	// for (int pe = 0 ; pe < npes ; pe++){
+	// 	if (mype == pe){
+	// 		cout<<"PE "<<pe<<" :"<<endl;
+	// 		// for(int it = 0 ; it < N+1 ; it++) cout<<ans[it]<<" ";
+	// 		cout<<"Iterations - "<<iter<<endl;
+	// 	}
+	// 	MPI_Barrier( MPI_COMM_WORLD );
+	// }
 
 	// deleting allocated memory
 	delete ans;

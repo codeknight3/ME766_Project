@@ -4,7 +4,7 @@
 
 using namespace std;
 
-const int MAXN = 12;
+const int MAXN = 16;
 const int INF = 1e9;
 const int MIN_EDGE_WEIGHT = 1;
 const int MAX_EDGE_WEIGHT = 10;
@@ -127,9 +127,12 @@ void print_matrix(vector<vector<int>>& matrix)
 	}
 }
 
-int main()
+int main(int argc, char **argv)
 {
-	int N = 11;
+
+	int N;
+
+	N = stoi(argv[1]);
 
 	precompute_factorial();
 
@@ -137,8 +140,8 @@ int main()
 	assign_edge_weights(matrix);
 
 	// printing the path weight matrix
-	print_matrix(matrix);
-	cout<<endl;
+	//print_matrix(matrix);
+	//cout<<endl;
 
 	auto start = std::chrono::high_resolution_clock::now();		// start time
 
@@ -147,15 +150,15 @@ int main()
 	auto finish = std::chrono::high_resolution_clock::now();	// end time
 
 	// printing the minimum cost path
-	for(auto x : ans)cout<<x<<" ";
-	cout<<endl;
-	cout<<endl;
+	//for(auto x : ans)cout<<x<<" ";
+	//cout<<endl;
+	//cout<<endl;
 
-    // printing the minimum path cost
-	cout<<find_path_cost(matrix,ans)<<endl;
-	cout<<endl;
+        // printing the minimum path cost
+	//cout<<find_path_cost(matrix,ans)<<endl;
+	//cout<<endl;
 
 	// printing the run-time
 	chrono::duration<double> elapsed = finish - start;
-	cout << "Run-Time : " << elapsed.count() << endl;
+	cout << fixed << setprecision(5) << elapsed.count() << endl;
 }

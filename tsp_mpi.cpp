@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const int MAXN = 13;
+const int MAXN = 16;
 const int INF = 1e9;
 const int MIN_EDGE_WEIGHT = 1;
 const int MAX_EDGE_WEIGHT = 10;

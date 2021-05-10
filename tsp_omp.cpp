@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const int MAXN = 12;
+const int MAXN = 16;
 const int INF = 1e9;
 const int MIN_EDGE_WEIGHT = 1;
 const int MAX_EDGE_WEIGHT = 10;
@@ -110,13 +110,12 @@ vector<int> tsp_omp(vector<vector<int>>&matrix)
 	  
 	  int num = omp_get_num_threads();
 	  int id = omp_get_thread_num();
-	  //cout<<id<<endl;
 	  long int iter_per_thread= k/num;
 	  int extra = k%num;
 	  
-	  if (id=0) {
-	    nodes = nth_permutation(nodes,0);
-	    iter_per_thread=iter_per_thread+extra;
+	  if (id<extra) {
+	    nodes = nth_permutation(nodes,(id)*(iter_per_thread+1));
+	    iter_per_thread=iter_per_thread+1;
 	  }
 	  else nodes = nth_permutation(nodes,(id)*iter_per_thread+extra);
 	  
@@ -158,18 +157,17 @@ void print_matrix(vector<vector<int>>& matrix)
 	}
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-	int N = 11;
+	int N = stoi(argv[1]);
+	int threads = stoi(argv[2]);
+	omp_set_num_threads(N);
 
 	precompute_factorial();
 
 	vector<vector<int>>matrix(N,vector<int>(N,0));
 	assign_edge_weights(matrix);
 
-	// printing the path weight matrix
-	// print_matrix(matrix);
-	// cout<<endl;
 
 	auto start = std::chrono::high_resolution_clock::now();		// start time
 
@@ -177,16 +175,12 @@ int main()
 
 	auto finish = std::chrono::high_resolution_clock::now();	        // end time
 
-	// printing the minimum cost path
-	for(auto x : ans)cout<<x<<" ";
-	cout<<endl;
-	cout<<endl;
 
     // printing the minimum path cost
-	cout<<find_path_cost(matrix,ans)<<endl;
-	cout<<endl;
+	//cout<<find_path_cost(matrix,ans)<<endl;
+	//cout<<endl;
 
 	// printing the run-time
 	chrono::duration<double> elapsed = finish - start;
-	cout << "Run-Time : " << elapsed.count() << endl;
+	cout << elapsed.count() << endl;
 }

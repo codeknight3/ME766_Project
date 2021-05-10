@@ -160,8 +160,10 @@ void print_matrix(vector<vector<int>>& matrix)
 int main(int argc, char *argv[])
 {
 	int N = stoi(argv[1]);
+
 	int threads = stoi(argv[2]);
-	omp_set_num_threads(N);
+
+	omp_set_num_threads(threads);
 
 	precompute_factorial();
 
@@ -182,5 +184,5 @@ int main(int argc, char *argv[])
 
 	// printing the run-time
 	chrono::duration<double> elapsed = finish - start;
-	cout << elapsed.count() << endl;
+	cout << fixed << setprecision(5) <<elapsed.count() << endl;
 }

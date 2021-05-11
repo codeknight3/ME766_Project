@@ -1,6 +1,3 @@
-// #include <stdio.h>
-// #include <time.h>
-// #include "cuda_runtime.h"
 #include<bits/stdc++.h>
 
 using namespace std;
@@ -13,7 +10,6 @@ const int INF = 1e9;
 const int MIN_EDGE_WEIGHT = 1;
 const int MAX_EDGE_WEIGHT = 10;
 
-// const int N = 10;
 
 long long factorial[MAXN+1];
 
@@ -50,7 +46,6 @@ __host__ void print_matrix(int* matrix, int N) {
 	for(int i=0; i<N; i++) {
 		for(int j=0; j<N; j++) {
 			cout << matrix[i*N + j] << " ";
-            //printf("%d ", matrix[i][j]);
 		}
 		printf("\n");
 	}
@@ -115,7 +110,6 @@ __device__ bool nth_permutation(int *arr, int arrsize, long long n) {
 
     // Assuming arrSize = N+1
 	bool taken[MAXN];
-    // bool taken[N+1];
 
 	for(int i=0; i<arrsize; i++) taken[i] = false;
 	
@@ -196,7 +190,6 @@ __global__ void tsp_cuda(int* matrix, int* path, long long* factorials, int N) {
 
 
         int val = find_path_cost(matrix, temp_path, N+1, N);
-        // printf("Block:%d\tThread: %d\tCost: %d\n", blockIdx.x, threadIdx.x, val);
 
         if(val < thread_optimal_values[threadIdx.x])
 		{
@@ -214,11 +207,9 @@ __global__ void tsp_cuda(int* matrix, int* path, long long* factorials, int N) {
 	if (threadIdx.x == 0) {
         int optimal_cost = INF;
         for (int i = 0; i < THREADS_PER_BLOCK; i++) {
-			// printf("Block: %d\tThread: %d\tCost: %d\n", blockIdx.x, i, thread_optimal_values[i]);
             if (thread_optimal_values[i] < optimal_cost) {
                 optimal_cost = thread_optimal_values[i];
 				block_optimal_values[blockIdx.x] = thread_optimal_values[i];
-				// printf("Block: %d\tThread: %d\tOpt Cost: %d\n", blockIdx.x, i, thread_optimal_values[i]);
                 for (int j = 0; j < N+1; j++) {
                     block_optimal_paths[blockIdx.x][j] = thread_optimal_paths[i][j];
                 }
@@ -315,5 +306,6 @@ int main(int argc, char **argv) {
 
     cudaFree(dev_matrix);
     cudaFree(dev_path);
+	cudaFree(dev_factorial);
 }
 

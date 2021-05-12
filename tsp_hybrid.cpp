@@ -15,7 +15,7 @@ long long fact[MAXN+1];
 
 int random(int l, int r)
 {
-  return l + rand()%(r-l+1);
+	return l + rand()%(r-l+1);
 }
 
 void precompute_factorial()
@@ -103,8 +103,8 @@ int main(int argc, char *argv[])
 	omp_set_num_threads(stoi(argv[2]));
 
 	int			npes;					/* Number of PEs */
-	int			mype;					/* My PE number  */
-	int			stat;					/* Error Status  */
+	int			mype;					/* My PE number	*/
+	int			stat;					/* Error Status	*/
 	MPI_Status	status;
 
 	double	start,end;					/* timing */
@@ -159,6 +159,8 @@ int main(int argc, char *argv[])
 	int optimal_value = INF;
 	int* ans = new int[N+1];
 
+	// divide among PEs
+
 	vector<int> nodes;
 
 	vector<int> my_ans;
@@ -183,55 +185,59 @@ int main(int argc, char *argv[])
 			end_perm_ind = rem*(nppe + 1) + (mype + 1 - rem)*nppe;
 		}
 	}
+
+	// int iter = 0;
+
+	// compute only when some work is assigned to the current PE
 	if(start_perm_ind <= end_perm_ind){
+		// iter++;
 
 		long long k = end_perm_ind - start_perm_ind + 1;
 		
 		#pragma omp parallel private(nodes) shared(my_ans,optimal_value)
 		{
 
-		  for(int i=1;i<N;i++)nodes.push_back(i);
-		  
-		  int num = omp_get_num_threads();
-		  int id = omp_get_thread_num();
-		  long long iter_per_thread= k/num;
-		  int extra = k%num;
-		  
-		  if (id < extra) {
-		    nodes = nth_permutation(nodes,start_perm_ind - 1 + (id)*(iter_per_thread + 1));
-		    iter_per_thread=iter_per_thread+1;
-		  }
-		  else nodes = nth_permutation(nodes,start_perm_ind - 1 +  (id)*iter_per_thread + extra);
-		  
-		  long long i=0;
-		  do
-		  {
-		  	vector<int>temp = nodes;
-		  	temp.push_back(0);
-		  	temp.insert(temp.begin(),0);
-		  	int val = find_path_cost(matrix,temp);
-		  	#pragma omp critical
-		  	{
-		  	  if(val<optimal_value){  
-		  		optimal_value = val;
-		  		my_ans = temp;
-		  	  }
-		  	}
-		  	i++;
-		  	
-		  	next_permutation(nodes.begin(),nodes.end());
-		  }
-		  while(i<iter_per_thread);
+			for(int i=1;i<N;i++)nodes.push_back(i);
+			
+			int num = omp_get_num_threads();
+			int id = omp_get_thread_num();
+			long long iter_per_thread= k/num;
+			int extra = k%num;
+
+			// assign iterations to each thread , dividing them equally
+
+			if (id < extra) {
+				nodes = nth_permutation(nodes,start_perm_ind - 1 + (id)*(iter_per_thread + 1));
+				iter_per_thread=iter_per_thread+1;
+			}
+			else nodes = nth_permutation(nodes,start_perm_ind - 1 +	(id)*iter_per_thread + extra);
+			
+			long long i=0;
+			do
+			{
+				vector<int>temp = nodes;
+				temp.push_back(0);
+				temp.insert(temp.begin(),0);
+				int val = find_path_cost(matrix,temp);
+				#pragma omp critical
+				{
+					if(val<optimal_value){	
+					optimal_value = val;
+					my_ans = temp;
+					}
+				}
+				i++;
+				
+				next_permutation(nodes.begin(),nodes.end());
+			}
+			while(i<iter_per_thread);
 		}
 		copy(my_ans.begin(), my_ans.end(), ans);
 	}
 
-	// divide among PEs
 
 
-	// int iter = 0;
 
-	// compute only when some work is assigned to the current PE
 
 
 	// comparing the optimal values from other PEs in the MASTER

@@ -6,7 +6,7 @@
 
 ## Overview
 
-The Traveling Salesman Problem (often called TSP) is a classic algorithmic problem in the field of computer science and  operations  research.  It  is  an  NP-Hard  problem  focused  on optimization.  TSP  has  several  applications  even  in  its  purest formulation,  such  as  planning,  logistics,  and  the  manufacture of  microchips;  and  can  be  slightly  modified  to  appear  as  a sub-problem  in  many  areas,  such  as  DNA  sequencing.  In  this project,  a  study  on  parallelization  of  th eBrute  Force  approach (under  several  paradigms)  of  the  Travelling  Salesman  Problem is  presented.  Detailed  timing  studies  for  the  serial  and  various parallel  implementations  of  the  Travelling  Salesman  Problem have  also  been  illustrated.
+The Travelling Salesman Problem (often called TSP) is a classic algorithmic problem in the field of computer science and  operations  research.  It  is  an  NP-Hard  problem  focused  on optimization.  TSP  has  several  applications  even  in  its  purest formulation,  such  as  planning,  logistics,  and  the  manufacture of  microchips;  and  can  be  slightly  modified  to  appear  as  a sub-problem  in  many  areas,  such  as  DNA  sequencing.  In  this project,  a  study  on  parallelization  of  the Brute  Force  approach (under  several  paradigms)  of  the  Travelling  Salesman  Problem is  presented.  Detailed  timing  studies  for  the  serial  and  various parallel  implementations  of  the  Travelling  Salesman  Problem have  also  been  illustrated.
 
 ### Implementations for Different Paradigms of Parallelization
 
@@ -17,9 +17,11 @@ The Traveling Salesman Problem (often called TSP) is a classic algorithmic probl
 | Shared Memory | OpenMP | `tsp_omp.cpp` |
 | Message Passing | MPI | `tsp_mpi.cpp` |
 | Hybrid | MPI & OpenMP | `tsp_hybrid.cpp` |
-| GPU Programming | CUDA | `tsp_cuda.cu` |
+| GPU Programming | CUDA | `tsp_cuda.cu` | 
 
-## [Report](https://github.com/codeknight3/ME766_Project/blob/main/Report.pdf)
+### [Project Report](https://github.com/codeknight3/ME766_Project/blob/main/Report.pdf)
+
+### [Presentation](https://github.com/codeknight3/ME766_Project/blob/main/Presentation.pdf)
 
 ## Usage
 

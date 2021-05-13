@@ -265,6 +265,8 @@ int main(int argc, char **argv) {
     cudaMemcpy(dev_path, path, path_size, cudaMemcpyHostToDevice);
     cudaMemcpy(dev_factorial, factorial, factorial_size, cudaMemcpyHostToDevice);
 
+    cudaDeviceSetLimit(cudaLimitMallocHeapSize, 128*1024*1024);
+
     // Launch the TSP kernel
 	tsp_cuda<<<BLOCKS, THREADS_PER_BLOCK>>>(dev_matrix, dev_path, dev_factorial, N);
 

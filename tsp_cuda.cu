@@ -242,7 +242,7 @@ int main(int argc, char **argv) {
 
     assign_edge_weights(matrix, N);
 
-    print_matrix(matrix, N);
+    // print_matrix(matrix, N);
 	
 	for (int i = 0; i < BLOCKS; i++){
 		block_optimal_values[i] = INF;
@@ -289,22 +289,24 @@ int main(int argc, char **argv) {
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
 
-    // printing the minimum cost path
-    printf("Minimum Cost Path: ");
-    for (int i = 0; i < N+1; i++) {
-        printf("%d ", path[i]);
-    }
-    printf("\n");
+	printf("%f\n", milliseconds*0.001);
 
     // printing the minimum cost path
-    int cost = 0;
-    for(int i=1; i<N+1; i++) {
-        cost += matrix[path[i]*N + path[i-1]];
-    }
-    printf("Path cost: %d \n", cost);
+    // printf("Minimum Cost Path: ");
+    // for (int i = 0; i < N+1; i++) {
+    //     printf("%d ", path[i]);
+    // }
+    // printf("\n");
+
+    // printing the minimum cost path
+    // int cost = 0;
+    // for(int i=1; i<N+1; i++) {
+    //     cost += matrix[path[i]*N + path[i-1]];
+    // }
+    // printf("Path cost: %d \n", cost);
 
     // printing the run-time
-    printf("Time taken: %f s\n", milliseconds*0.001);
+    // printf("Time taken: %f s\n", milliseconds*0.001);
 
     cudaFree(dev_matrix);
     cudaFree(dev_path);

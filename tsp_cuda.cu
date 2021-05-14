@@ -14,7 +14,8 @@ const int MAX_EDGE_WEIGHT = 10;
 long long factorial[MAXN+1];
 
 __managed__ int block_optimal_values[BLOCKS];
-__managed__ int block_optimal_paths[BLOCKS][MAXN+1];
+// __managed__ int block_optimal_paths[BLOCKS][MAXN+1];
+__managed__ int block_optimal_permutation[BLOCKS];
 
 /////////////////// Host Functions ///////////////////
 
@@ -59,7 +60,7 @@ __device__ void swap(int &a, int &b) {
 	b = temp;
 }
 
-__device__ long long fact(int n) {
+__host__ __device__ long long fact(int n) {
 	long long ans = 1;
 	for(int i=1;i<=n;i++) {
 		ans *= i;
@@ -104,8 +105,21 @@ __device__ bool nxt_permutation(int *arr, int n) {
 	return true;
 }
 
+
+__device__ int find_path_cost(int* matrix, int* arr, int arrsize, int n) {   
+	int cost = 0;
+	for(int i=1; i<arrsize; i++) {
+        int to = arr[i];
+        int from = arr[i-1];
+		cost += matrix[to*n + from];
+	}
+	return cost;
+}
+
+/////////////////// Global Functions ///////////////////
+
 //Input array should be sorted
-__device__ bool nth_permutation(int *arr, int arrsize, long long n) {
+__host__ __device__ bool nth_permutation(int *arr, int arrsize, long long n) {
 	if(n>fact(arrsize))return false;
 
     // Assuming arrSize = N+1
@@ -147,33 +161,26 @@ __device__ bool nth_permutation(int *arr, int arrsize, long long n) {
 	return true;
 }
 
-__device__ int find_path_cost(int* matrix, int* arr, int arrsize, int n) {   
-	int cost = 0;
-	for(int i=1; i<arrsize; i++) {
-        int to = arr[i];
-        int from = arr[i-1];
-		cost += matrix[to*n + from];
-	}
-	return cost;
-}
-
-/////////////////// Global Functions ///////////////////
-
 __global__ void tsp_cuda(int* matrix, int* path, long long* factorials, int N) {
 
 	__shared__ int thread_optimal_values[THREADS_PER_BLOCK];
-    __shared__ int* thread_optimal_paths[THREADS_PER_BLOCK];
+    // __shared__ int* thread_optimal_paths[THREADS_PER_BLOCK];
+	__shared__ int thread_optimal_permutation[THREADS_PER_BLOCK];
 
     int thread = threadIdx.x + blockIdx.x * blockDim.x;
 
     thread_optimal_values[threadIdx.x] = INF;
-    thread_optimal_paths[threadIdx.x] = new int[N+1];
+    // thread_optimal_paths[threadIdx.x] = new int[N+1];
 
     long long iter_per_thread = factorials[N-1] / (BLOCKS * THREADS_PER_BLOCK);
 
     int arr[MAXN-1];
     for (int i = 1; i < N; i++) arr[i-1] = path[i];
-    nth_permutation(arr, N-1, (thread * iter_per_thread) + 1);
+
+	long long start_perm = (thread * iter_per_thread) + 1;
+	thread_optimal_permutation[threadIdx.x] = start_perm;
+
+    nth_permutation(arr, N-1, start_perm);
 
 	// Last thread of all handles the permutations not entirely divisible by the total threads in all blocks
 	if (thread == (BLOCKS * THREADS_PER_BLOCK) - 1) {
@@ -194,7 +201,8 @@ __global__ void tsp_cuda(int* matrix, int* path, long long* factorials, int N) {
         if(val < thread_optimal_values[threadIdx.x])
 		{
 			thread_optimal_values[threadIdx.x] = val;
-            for (int i = 0; i < N+1; i++) thread_optimal_paths[threadIdx.x][i] = temp_path[i];
+            // for (int i = 0; i < N+1; i++) thread_optimal_paths[threadIdx.x][i] = temp_path[i];
+			thread_optimal_permutation[threadIdx.x] = start_perm + iter;
 		}
 
         iter++;
@@ -210,9 +218,10 @@ __global__ void tsp_cuda(int* matrix, int* path, long long* factorials, int N) {
             if (thread_optimal_values[i] < optimal_cost) {
                 optimal_cost = thread_optimal_values[i];
 				block_optimal_values[blockIdx.x] = thread_optimal_values[i];
-                for (int j = 0; j < N+1; j++) {
-                    block_optimal_paths[blockIdx.x][j] = thread_optimal_paths[i][j];
-                }
+                // for (int j = 0; j < N+1; j++) {
+                //     block_optimal_paths[blockIdx.x][j] = thread_optimal_paths[i][j];
+                // }
+				block_optimal_permutation[blockIdx.x] = thread_optimal_permutation[i];
             }           
         }
     }
@@ -274,14 +283,22 @@ int main(int argc, char **argv) {
 	cudaDeviceSynchronize();
 
 	int optimal_cost = INF;
+	long long optimal_permutation;
 	for (int i = 0; i < BLOCKS; i++) {
 		if (block_optimal_values[i] < optimal_cost) {
 			optimal_cost = block_optimal_values[i];
-			for (int j = 0; j < N+1; j++) {
-				path[j] = block_optimal_paths[i][j];
-			}
+			// for (int j = 0; j < N+1; j++) {
+			// 	path[j] = block_optimal_paths[i][j];
+			// }
+			optimal_permutation = block_optimal_permutation[i];
 		}	
 	}
+
+	int arr[MAXN-1];
+    for (int i = 1; i < N; i++) arr[i-1] = path[i];
+	nth_permutation(arr, N-1, optimal_permutation);
+
+	for (int i = 1; i < N; i++) path[i] = arr[i-1];
 
     cudaEventRecord(stop);
 
@@ -292,18 +309,18 @@ int main(int argc, char **argv) {
 	printf("%f\n", milliseconds*0.001);
 
     // printing the minimum cost path
-    // printf("Minimum Cost Path: ");
-    // for (int i = 0; i < N+1; i++) {
-    //     printf("%d ", path[i]);
-    // }
-    // printf("\n");
+    printf("Minimum Cost Path: ");
+    for (int i = 0; i < N+1; i++) {
+        printf("%d ", path[i]);
+    }
+    printf("\n");
 
     // printing the minimum cost path
-    // int cost = 0;
-    // for(int i=1; i<N+1; i++) {
-    //     cost += matrix[path[i]*N + path[i-1]];
-    // }
-    // printf("Path cost: %d \n", cost);
+    int cost = 0;
+    for(int i=1; i<N+1; i++) {
+        cost += matrix[path[i]*N + path[i-1]];
+    }
+    printf("Path cost: %d \n", cost);
 
     // printing the run-time
     // printf("Time taken: %f s\n", milliseconds*0.001);
